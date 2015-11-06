@@ -12,19 +12,20 @@ ENV CONDA_DIR=/opt/conda \
   NB_UID=1000 
 
 # Install Jupyter notebook
-RUN conda install --yes \
-    'notebook=4.0*' \
-    terminado \
-    && conda clean -yt
 
 # Create jovyan user with UID=1000 and in the 'users' group
 # Grant ownership over the conda dir and home dir, but stick the group as root.
 RUN adduser -s /bin/bash -u $NB_UID -D $NB_USER && \
-    mkdir /home/$NB_USER/work && \
-    mkdir /home/$NB_USER/.jupyter && \
-    mkdir /home/$NB_USER/.local && \
-    chown -R $NB_USER:users $CONDA_DIR && \
-    chown -R $NB_USER:users /home/$NB_USER
+    mkdir /home/$NB_USER/work \
+    && mkdir /home/$NB_USER/.jupyter \
+    && mkdir /home/$NB_USER/.local \
+    && mkdir -p $CONDA_DIR \
+    && chown -R $NB_USER:users $CONDA_DIR \
+    && chown -R $NB_USER:users /home/$NB_USER \
+    && su $NB_USER -c "conda install --yes \
+    'notebook=4.0*' \
+    terminado" \
+    && su $NB_USER -c "conda clean -yt"
 
 # Configure container startup
 EXPOSE 8888
