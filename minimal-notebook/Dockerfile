@@ -27,12 +27,6 @@ RUN adduser -s /bin/bash -u $NB_UID -D $NB_USER && \
     terminado" \
     && su $NB_USER -c "conda clean -yt"
 
-# Configure container startup
-EXPOSE 8888
-WORKDIR /home/$NB_USER/work
-ENTRYPOINT ["tini", "--"]
-CMD ["start-notebook.sh"]
-
 # Add local files as late as possible to avoid cache busting
 COPY start-notebook.sh /usr/local/bin/
 COPY jupyter_notebook_config.py /home/$NB_USER/.jupyter/
