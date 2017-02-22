@@ -1,40 +1,25 @@
-FROM c12e/alpine-miniconda
+FROM continuumio/miniconda
 
-MAINTAINER CognitiveScale <devops@cognitivescale.com>
-
-# Install all OS dependencies for fully functional notebook server
-
-# Configure environment
-ENV CONDA_DIR=/opt/conda \
-  PATH=$CONDA_DIR/bin:$PATH \ 
-  SHELL=/bin/bash \
-  NB_USER=jovyan \
-  NB_UID=1000 
-
-# Install Jupyter notebook
-
-# Create jovyan user with UID=1000 and in the 'users' group
-# Grant ownership over the conda dir and home dir, but stick the group as root.
-RUN adduser -s /bin/bash -u $NB_UID -D $NB_USER && \
-    mkdir /home/$NB_USER/work \
-    && mkdir /home/$NB_USER/.jupyter \
-    && mkdir /home/$NB_USER/.local \
-    && mkdir -p $CONDA_DIR \
-    && chown -R $NB_USER:users $CONDA_DIR \
-    && chown -R $NB_USER:users /home/$NB_USER \
-    && su $NB_USER -c "conda install --yes \
-    'notebook=4.0*' \
-    terminado" \
-    && su $NB_USER -c "conda clean -yt"
-
-# Add local files as late as possible to avoid cache busting
-COPY start-notebook.sh /usr/local/bin/
-COPY jupyter_notebook_config.py /home/$NB_USER/.jupyter/
-RUN chown -R $NB_USER:users /home/$NB_USER/.jupyter
-
-# Configure container startup
+RUN apt-get update
+RUN apt-get -y install \
+    build-essential \
+    libgsl0ldbl \
+    gsl-bin \
+    libgsl0-dev \
+    libblas-dev \
+    liblapack-dev \
+    libatlas-base-dev \
+    gfortran \
+    cmake \
+    vim \
+    libarmadillo-dev \
+    ca-certificates
+RUN conda config --set ssl_verify false
+RUN conda update conda
+RUN conda install jupyter -y --quiet \
+    && mkdir /opt/notebooks
+RUN conda install pip pandas scipy matplotlib seaborn pymongo ipython scikit-learn opencv nltk gensim 
+##### this has to be configured for each new environment ######
 EXPOSE 8888
-WORKDIR /home/$NB_USER/work
-ENTRYPOINT ["tini", "--"]
-CMD ["start-notebook.sh"]
-
+CMD /opt/conda/bin/jupyter notebook --ip='*' --port=8888 --no-browser
+#################################
